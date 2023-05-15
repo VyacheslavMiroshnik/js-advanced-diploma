@@ -1,76 +1,184 @@
-import Bowman from './Characters/Bowman';
-import Daemon from './Characters/Daemon';
-import Magician from './Characters/Magician';
-import Swordsman from './Characters/Swordsman';
-import Undead from './Characters/Undead';
-import Vampire from './Characters/Vampire';
-import PositionedCharacter from './PositionedCharacter';
-import { generateTeam } from './generators';
+import GamePlay from './GamePlay';
+import GameState from './GameState';
+import { calculateAttackCharacter, calculateMoveCharacter } from './utils';
 
 export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.tooltipMessage = ``;
-    this.positionsCharacter = [];
-    this.userTeam = generateTeam([Bowman, Magician, Swordsman], 3, 3);
-    this.enemyTeam = generateTeam([Daemon, Undead, Vampire], 3, 3);
-    this.userTeamPositions = this.setDefaultPosition(1);
-    this.enemyTeamPositions = this.setDefaultPosition(
-      this.gamePlay.boardSize - 1
-    );
+    this.gameState = new GameState(this.gamePlay);
+    this.activeClickPosition = null;
+    this.activeEnterPosition = null;
   }
 
   init() {
     this.gamePlay.drawUi('prairie');
+    this.gamePlay.addCellClickListener(this.onCellLeave.bind(this));
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
-    this.drawCharactersPosition('user');
-    this.drawCharactersPosition('enemy');
-    this.gamePlay.redrawPositions(this.positionsCharacter);
+    this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+    this.createNewGame(this.gameState);
+    this.gamePlay.redrawPositions(this.allPositionedCharacter);
+    this.calculateAttackCharacter = calculateAttackCharacter;
+    this.calculateMoveCharacter = calculateMoveCharacter;
     // TODO: add event listeners to gamePlay events
     // TODO: load saved stated from stateService
   }
 
-  setDefaultPosition(startposition) {
-    const set = new Set();
-    const { boardSize } = this.gamePlay;
-    for (let i = startposition; i < boardSize ** 2; i += boardSize) {
-      set.add(i);
-      set.add(i - 1);
-    }
-    return set;
+  getActiveCharacter() {
+    return this.gameState.activeTeam.filter(
+      (el) => el.position === this.activeClickPosition
+    )[0];
   }
 
-  drawCharactersPosition(typeTeam) {
-    const { characters } = typeTeam === 'user' ? this.userTeam : this.enemyTeam;
-    const positions =
-      typeTeam === 'user' ? this.userTeamPositions : this.enemyTeamPositions;
-    for (let i = 0; i < characters.length; i += 1) {
-      const arrayPositions = Array.from(positions);
-      const randomIndex = Math.floor(Math.random() * arrayPositions.length);
-      const position = arrayPositions[randomIndex];
-      positions.delete(position);
-      this.positionsCharacter.push(
-        new PositionedCharacter(characters[i], position)
-      );
-    }
+  getTargetCharacter(index) {
+    return this.gameState.targetTeam.filter((el) => el.position === index)[0];
+  }
+
+  createNewGame({
+    userTeam,
+    enemyTeam,
+    userTeamPositionedCharacters,
+    enemyTeamPositionedCharacters,
+    allPositionedCharacter,
+  }) {
+    this.userTeam = userTeam;
+    this.enemyTeam = enemyTeam;
+    this.userTeamPositionedCharacters = userTeamPositionedCharacters;
+    this.enemyTeamPositionedCharacters = enemyTeamPositionedCharacters;
+    this.allPositionedCharacter = allPositionedCharacter;
+  }
+
+  update() {
+    this.gamePlay.deselectCell(this.activeClickPosition);
+    this.gamePlay.deselectCell(this.activeEnterPosition);
+    this.activeClickPosition = null;
+    this.activeEnterPosition = null;
+    this.gameState.changeTeam();
+    this.gamePlay.setCursor('auto');
+    this.gamePlay.redrawPositions(this.allPositionedCharacter);
   }
 
   createTooltipMessage(character) {
-    const { level, attack, defence, health, type } = character;
-    this.message = `\u{1f396}${level} \u{2694}${attack} \u{1f6e1}${defence} \u{2764}${health} ---${type}`;
+    const { level, attack, defence, health } = character;
+    this.message = `\u{1f396}${level} \u{2694}${attack} \u{1f6e1}${defence} \u{2764}${health}`;
+  }
+
+  moved(index) {
+    if (
+      this.calculateMoveCharacter(this.getActiveCharacter()).includes(index)
+    ) {
+      this.getActiveCharacter().position = index;
+      this.update();
+    }
+  }
+
+  async attacked(index) {
+    const attackCharacter = this.getActiveCharacter();
+    const targetCharacter = this.getTargetCharacter(index);
+    const attack = Math.max(
+      attackCharacter.character.attack - targetCharacter.character.defence,
+      attackCharacter.character.attack * 0.1
+    );
+    await this.gamePlay.showDamage(index, attack);
+    // setTimeout(()=>{
+    //   this.gamePlay.showDamage(index,attack)
+    // },1)
+    targetCharacter.character.health -= attack;
+    this.update();
+  }
+
+  changeCursorType(index) {
+    let cursorType = 'auto';
+    if (this.activeClickPosition !== index) {
+      if (this.checkBusyField(index)) {
+        if (this.checkActiveTeamField(index)) {
+          cursorType = 'pointer';
+        } else if (
+          this.calculateAttackCharacter(this.getActiveCharacter()).includes(
+            index
+          )
+        ) {
+          this.gamePlay.selectCell(index, 'red');
+          cursorType = 'crosshair';
+        } else {
+          cursorType = 'not-allowed';
+        }
+      } else if (
+        this.calculateMoveCharacter(this.getActiveCharacter()).includes(index)
+      ) {
+        this.gamePlay.selectCell(index, 'green');
+        cursorType = 'pointer';
+      } else {
+        cursorType = 'not-allowed';
+      }
+    }
+    return cursorType;
+  }
+
+  checkBusyField(index) {
+    const isbusy =
+      this.allPositionedCharacter.filter((el) => el.position === index).length >
+      0;
+    return isbusy;
+  }
+
+  checkActiveTeamField(index) {
+    const activeTeamCharacterPosition = this.gameState.activeTeam.map(
+      (el) => el.position
+    );
+    return activeTeamCharacterPosition.indexOf(index) !== -1;
+  }
+
+  checkTargedTeamField(index) {
+    const targetTeamCharacterPosition = this.gameState.targetTeam.map(
+      (el) => el.position
+    );
+    return targetTeamCharacterPosition.indexOf(index) !== -1;
   }
 
   onCellClick(index) {
-    // TODO: react to click
+    if (this.activeClickPosition !== null) {
+      this.gamePlay.deselectCell(this.activeClickPosition);
+      if (this.checkBusyField(index)) {
+        if (this.checkActiveTeamField(index)) {
+          this.gamePlay.selectCell(index);
+          this.activeClickPosition = index;
+        } else if (this.changeCursorType(index) === 'crosshair') {
+          this.attacked(index);
+        } else {
+          GamePlay.showError('Данным персонажем управляет компьютер');
+        }
+      } else {
+        this.moved(index);
+      }
+    } else if (this.checkBusyField(index)) {
+      if (this.checkActiveTeamField(index)) {
+        this.gamePlay.selectCell(index);
+        this.activeClickPosition = index;
+      } else {
+        GamePlay.showError('Данным персонажем управляет компьютер');
+      }
+    }
   }
 
   onCellEnter(index) {
-    const arr = this.positionsCharacter.map((el) => el.position);
-    if (arr.includes(index)) {
-      const indexCharacter = arr.indexOf(index);
+    if (
+      this.activeEnterPosition !== null &&
+      this.activeEnterPosition !== this.activeClickPosition
+    ) {
+      this.gamePlay.deselectCell(this.activeEnterPosition);
+    }
+    if (this.activeClickPosition !== null) {
+      this.activeEnterPosition = index;
+
+      this.gamePlay.setCursor(this.changeCursorType(index));
+    } else if (this.checkBusyField(index)) {
+      const characterPositions = this.allPositionedCharacter.map(
+        (el) => el.position
+      );
+      const indexCharacter = characterPositions.indexOf(index);
       this.createTooltipMessage(
-        this.positionsCharacter[indexCharacter].character
+        this.allPositionedCharacter[indexCharacter].character
       );
       this.gamePlay.showCellTooltip(this.message, index);
       this.message = ``;
