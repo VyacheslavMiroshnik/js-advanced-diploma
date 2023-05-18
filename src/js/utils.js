@@ -49,13 +49,16 @@ export function calcTileType(index, boardSize) {
   );
 }
 
-export function calculateMoveCharacter({ character, position }) {
+export function calculateMoveCharacter(team) {
+  const {character,position} = team;
   const { type } = character;
-  const { boardSize } = this.gameState;
+  const { boardSize} = this.gameState;
+  const friendlyPosition = this.gameState.allPositionedCharacter.map(el => el.position);
   const moved = GameState.moved(type);
   const leftBorderPosition = this.gameState.border.get('leftBorder');
   const rightBorderPosition = this.gameState.border.get('rightBorder');
   const movedSet = new Set();
+
   for (let i  = 1; i <= moved; i+=1 ){
     if(rightBorderPosition.includes(position - i) || position - i < 0){
       break;
@@ -68,7 +71,7 @@ export function calculateMoveCharacter({ character, position }) {
   }
   
   for (let i  = 1; i <= moved; i+=1 ){
-    if(leftBorderPosition.includes(position + i)){
+    if(leftBorderPosition.includes(position + i) || (position + i)>= boardSize ** 2){
       break;
     }
     movedSet.add(position - ((i)*boardSize)  )
@@ -77,13 +80,17 @@ export function calculateMoveCharacter({ character, position }) {
     movedSet.add(position + i - ((i)*boardSize) )
     movedSet.add(position + i )
   }
-  movedSet.delete(position)
+  for (let i = 0; i< friendlyPosition.length; i += 1 ){
+    movedSet.delete(friendlyPosition[i])
+  }
 
   return Array.from(movedSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
-export function  calculateAttackCharacter({ character, position }) {
+export function  calculateAttackCharacter(team) {
+  const {character,position} = team;
   const { type } = character;
   const { boardSize } = this.gameState;
+  const friendlyPosition = this.gameState.activeTeam.includes(team)? this.gameState.activeTeam.map(el => el.position) : this.gameState.targetTeam.map(el => el.position);
   const attack = GameState.attack(type);
   const leftBorderPosition = this.gameState.border.get('leftBorder');
   const rightBorderPosition = this.gameState.border.get('rightBorder');
@@ -108,10 +115,21 @@ export function  calculateAttackCharacter({ character, position }) {
       attackSet.add(leftBorderPosition[i] + x);
     }
   }
-  attackSet.delete(position);
+  for (let i = 0; i< friendlyPosition.length; i += 1 ){
+    attackSet.delete(friendlyPosition[i])
+  }
   return Array.from(attackSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
+export  function  rankedMove(aiTeam,targetCharacter,afterAttack) {
+  const {character} = targetCharacter;
+  const rank = ((GameState.moved(character.type) + character.health) / (100 * GameState.attack(character.type))) + (1/character.attack)*afterAttack;
+  return rank
+}
+export function rankedAttack(aiTeam,targetTeam,afterAttack){
+const rank = (aiTeam.character.attack - targetTeam.character.defence) - (afterAttack* (targetTeam.character.attack - aiTeam.character.defence))
+return rank/10
 
+}
 export function calcHealthLevel(health) {
   if (health < 15) {
     return 'critical';
