@@ -1,17 +1,11 @@
-import Bowman from './Characters/Bowman';
-import Daemon from './Characters/Daemon';
-import Magician from './Characters/Magician';
-import Swordsman from './Characters/Swordsman';
-import Undead from './Characters/Undead';
-import Vampire from './Characters/Vampire';
-import { generateTeam } from './generators';
+
 import PositionedCharacter from './PositionedCharacter';
 
 export default class GameState {
-  constructor({ boardSize }) {
+  constructor({ boardSize },userTeam, enemyTeam) {
     this.boardSize = boardSize;
-    this.userTeam = generateTeam([Bowman, Magician, Swordsman], 4, 3);
-    this.enemyTeam = generateTeam([Daemon, Undead, Vampire], 4, 3);
+    this.userTeam = userTeam;
+    this.enemyTeam = enemyTeam;
     this.userTeamPositionedCharacters = this.creatPositionedCharactersTeam(
       this.userTeam,
       'user'
@@ -25,6 +19,7 @@ export default class GameState {
     );
     this.activeTeam = this.userTeamPositionedCharacters;
     this.targetTeam = this.enemyTeamPositionedCharacters;
+    this.gameLevel = { level: 1, theme: 'prairie' };
     this.border = this.createGameField();
   }
 

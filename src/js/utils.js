@@ -1,4 +1,12 @@
 import GameState from "./GameState";
+import { generateTeam } from "./generators";
+import Bowman from './Characters/Bowman';
+import Daemon from './Characters/Daemon';
+import Magician from './Characters/Magician';
+import Swordsman from './Characters/Swordsman';
+import Undead from './Characters/Undead';
+import Vampire from './Characters/Vampire';
+
 
 /**
  * @todo
@@ -24,6 +32,17 @@ import GameState from "./GameState";
  * calcTileType(7, 7); // 'left'
  * ```
  * */
+export function createNewTeam(type){
+    
+  if (type === 'user'){
+    return generateTeam([Bowman, Magician, Swordsman], 4, 3)
+  }
+    
+  return generateTeam([Daemon, Undead, Vampire], 4, 3)
+  
+
+}
+
 export function calcTileType(index, boardSize) {
   const topLeft = index === 0 ? 'top-left' : null;
   const topRight = index === boardSize - 1 ? 'top-right' : null;

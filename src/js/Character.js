@@ -22,7 +22,8 @@ export default class Character {
       this.defence = 0;
       this.health = 50;
       this.type = type;
-      this.leveUp(level - 1);
+      
+        
     }
 
     // TODO: выбросите исключение, если кто-то использует 'new Character()'

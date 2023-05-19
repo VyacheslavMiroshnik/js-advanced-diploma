@@ -4,6 +4,7 @@ import themes from './themes';
 import {
   calculateAttackCharacter,
   calculateMoveCharacter,
+  createNewTeam,
   rankedAttack,
   rankedMove,
 } from './utils';
@@ -12,56 +13,78 @@ export default class GameController {
   constructor(gamePlay, stateService) {
     this.gamePlay = gamePlay;
     this.stateService = stateService;
-    this.gameState = new GameState(this.gamePlay);
-    this.activeClickPosition = null;
-    this.activeEnterPosition = null;
-    this.gameLevel = { level: 1, theme: 'prairie' };
+    this.userTeam = createNewTeam('user');
+    this.enemyTeam = createNewTeam('enemy');
+    this.gameState = new GameState(
+      this.gamePlay,
+      this.userTeam,
+      this.enemyTeam
+    );
   }
 
   init() {
-    this.gamePlay.drawUi(this.gameLevel.theme);
     this.gamePlay.addCellClickListener(this.onCellLeave.bind(this));
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
-    this.createNewGame(this.gameState);
-    this.gamePlay.redrawPositions(this.allPositionedCharacter);
     this.calculateAttackCharacter = calculateAttackCharacter;
     this.calculateMoveCharacter = calculateMoveCharacter;
     this.rankedMove = rankedMove;
     this.rankedAttack = rankedAttack;
+    this.syncGameState(this.gameState);
+    this.startGame();
     // TODO: add event listeners to gamePlay events
     // TODO: load saved stated from stateService
   }
 
-  updateGameLeve() {
-    this.gameLevel.level += 1;
-    const keys = Object.keys(themes);
-    this.gameLevel.theme =
-      themes[keys[(this.gameLevel.level - 1) % keys.length]];
-  }
-
-  getActiveCharacter() {
-    return this.gameState.activeTeam.filter(
-      (el) => el.position === this.activeClickPosition
-    )[0];
-  }
-
-  getTargetCharacter(index) {
-    return this.gameState.targetTeam.filter((el) => el.position === index)[0];
-  }
-
-  createNewGame({
+  syncGameState({
     userTeam,
     enemyTeam,
     userTeamPositionedCharacters,
     enemyTeamPositionedCharacters,
     allPositionedCharacter,
+    gameLevel,
   }) {
     this.userTeam = userTeam;
     this.enemyTeam = enemyTeam;
     this.userTeamPositionedCharacters = userTeamPositionedCharacters;
     this.enemyTeamPositionedCharacters = enemyTeamPositionedCharacters;
     this.allPositionedCharacter = allPositionedCharacter;
+    this.gameLevel = gameLevel;
+  }
+
+  startGame() {
+    this.gamePlay.drawUi(this.gameLevel.theme);
+    this.gamePlay.redrawPositions(this.allPositionedCharacter);
+    this.activeClickPosition = null;
+    this.activeEnterPosition = null;
+  }
+
+  roundOver() {
+    if (!this.userTeamPositionedCharacters.length) {
+      this.userTeam = createNewTeam('user');
+      this.updateGameLevel(this.enemyTeam);
+    } else {
+      this.enemyTeam = createNewTeam('enemy');
+      this.updateGameLevel(this.userTeam);
+    }
+    this.gameState = new GameState(
+      this.gamePlay,
+      this.userTeam,
+      this.enemyTeam
+    );
+    this.syncGameState(this.gameState);
+    this.startGame();
+  }
+
+  updateGameLevel(team) {
+    this.gameLevel.level += 1;
+    const keys = Object.keys(themes);
+    this.gameLevel.theme =
+      themes[keys[(this.gameLevel.level - 1) % keys.length]];
+    for (let i = 0; i < team.characters.length; i += 1) {
+      const person = team.characters[i];
+      person.leveUp(1);
+    }
   }
 
   update() {
@@ -79,6 +102,63 @@ export default class GameController {
     if (this.gameState.activeTeam === this.enemyTeamPositionedCharacters) {
       this.aiLogic();
     }
+  }
+
+  moved(index) {
+    if (
+      this.calculateMoveCharacter(this.getActiveCharacter()).includes(index)
+    ) {
+      this.getActiveCharacter().position = index;
+      this.update();
+    }
+  }
+
+  async attacked(index) {
+    const attackCharacter = this.getActiveCharacter();
+    const targetCharacter = this.getTargetCharacter(index);
+    const attack = Math.max(
+      attackCharacter.character.attack - targetCharacter.character.defence,
+      attackCharacter.character.attack * 0.1
+    );
+    await this.gamePlay.showDamage(index, attack);
+    // setTimeout(()=>{
+    //   this.gamePlay.showDamage(index,attack)
+    // },1)
+    targetCharacter.character.health -= attack;
+    this.checkDead(targetCharacter);
+    if (
+      !this.userTeamPositionedCharacters.length ||
+      !this.enemyTeamPositionedCharacters.length
+    ) {
+      this.roundOver();
+    } else {
+      this.update();
+    }
+  }
+
+  checkDead(character) {
+    if (character.character.health <= 0) {
+      if (this.gameState.userTeamPositionedCharacters.includes(character)) {
+        const newUserTeam = new Set(
+          this.gameState.userTeamPositionedCharacters
+        );
+        newUserTeam.delete(character);
+        this.gameState.userTeamPositionedCharacters = Array.from(newUserTeam);
+      } else {
+        const newEnemyTeam = new Set(
+          this.gameState.enemyTeamPositionedCharacters
+        );
+        newEnemyTeam.delete(character);
+        this.gameState.enemyTeamPositionedCharacters = Array.from(newEnemyTeam);
+      }
+
+      this.gameState.allPositionedCharacter =
+        this.gameState.userTeamPositionedCharacters.concat(
+          this.gameState.enemyTeamPositionedCharacters
+        );
+    }
+
+    this.syncGameState(this.gameState);
   }
 
   aiLogic() {
@@ -215,56 +295,6 @@ export default class GameController {
     this.message = `\u{1f396}${level} \u{2694}${attack} \u{1f6e1}${defence} \u{2764}${health}`;
   }
 
-  moved(index) {
-    if (
-      this.calculateMoveCharacter(this.getActiveCharacter()).includes(index)
-    ) {
-      this.getActiveCharacter().position = index;
-      this.update();
-    }
-  }
-
-  async attacked(index) {
-    const userTeamSet = this.gameState.userTeamPositionedCharacters;
-    const enemyTeamSet = this.gameState.enemyTeamPositionedCharacters;
-    const attackCharacter = this.getActiveCharacter();
-    const targetCharacter = this.getTargetCharacter(index);
-    const attack = Math.max(
-      attackCharacter.character.attack - targetCharacter.character.defence,
-      attackCharacter.character.attack * 0.1
-    );
-    await this.gamePlay.showDamage(index, attack);
-    // setTimeout(()=>{
-    //   this.gamePlay.showDamage(index,attack)
-    // },1)
-    targetCharacter.character.health -= attack;
-    this.checkDead(targetCharacter);
-    this.update();
-  }
-
-  checkDead(character) {
-    if (character.character.health <= 0) {
-      if (this.gameState.userTeamPositionedCharacters.includes(character)) {
-        const newUserTeam = new Set(
-          this.gameState.userTeamPositionedCharacters
-        ).delete(character);
-        this.gameState.userTeamPositionedCharacters = Array.from(newUserTeam);
-      } else {
-        const newEnemyTeam = new Set(
-          this.gameState.enemyTeamPositionedCharacters
-        );
-        newEnemyTeam.delete(character);
-        this.gameState.enemyTeamPositionedCharacters = Array.from(newEnemyTeam);
-      }
-
-      this.gameState.allPositionedCharacter =
-        this.gameState.userTeamPositionedCharacters.concat(
-          this.gameState.enemyTeamPositionedCharacters
-        );
-    }
-    this.createNewGame(this.gameState);
-  }
-
   changeCursorType(index) {
     let cursorType = 'auto';
     if (this.activeClickPosition !== index) {
@@ -312,6 +342,16 @@ export default class GameController {
       (el) => el.position
     );
     return targetTeamCharacterPosition.indexOf(index) !== -1;
+  }
+
+  getActiveCharacter() {
+    return this.gameState.activeTeam.filter(
+      (el) => el.position === this.activeClickPosition
+    )[0];
+  }
+
+  getTargetCharacter(index) {
+    return this.gameState.targetTeam.filter((el) => el.position === index)[0];
   }
 
   onCellClick(index) {
