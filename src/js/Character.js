@@ -22,7 +22,23 @@ export default class Character {
       this.defence = 0;
       this.health = 50;
       this.type = type;
+      this.leveUp(level - 1);
     }
+
     // TODO: выбросите исключение, если кто-то использует 'new Character()'
+  }
+
+  leveUp(level) {
+    for (let i = 0; i < level; i += 1) {
+      this.attack = Math.max(
+        this.attack,
+        (this.attack * (80 + this.health)) / 100
+      );
+      this.defence = Math.max(
+        this.defence,
+        (this.defence * (80 + this.health)) / 100
+      );
+    }
+    this.health = this.health + 80 > 100 ? 100 : this.health + 80;
   }
 }

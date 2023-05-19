@@ -10,8 +10,8 @@ import PositionedCharacter from './PositionedCharacter';
 export default class GameState {
   constructor({ boardSize }) {
     this.boardSize = boardSize;
-    this.userTeam = generateTeam([Bowman, Magician, Swordsman], 3, 3);
-    this.enemyTeam = generateTeam([Daemon, Undead, Vampire], 3, 3);
+    this.userTeam = generateTeam([Bowman, Magician, Swordsman], 4, 3);
+    this.enemyTeam = generateTeam([Daemon, Undead, Vampire], 4, 3);
     this.userTeamPositionedCharacters = this.creatPositionedCharactersTeam(
       this.userTeam,
       'user'

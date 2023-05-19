@@ -1,5 +1,6 @@
 import GamePlay from './GamePlay';
 import GameState from './GameState';
+import themes from './themes';
 import {
   calculateAttackCharacter,
   calculateMoveCharacter,
@@ -14,10 +15,11 @@ export default class GameController {
     this.gameState = new GameState(this.gamePlay);
     this.activeClickPosition = null;
     this.activeEnterPosition = null;
+    this.gameLevel = { level: 1, theme: 'prairie' };
   }
 
   init() {
-    this.gamePlay.drawUi('prairie');
+    this.gamePlay.drawUi(this.gameLevel.theme);
     this.gamePlay.addCellClickListener(this.onCellLeave.bind(this));
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
@@ -29,6 +31,13 @@ export default class GameController {
     this.rankedAttack = rankedAttack;
     // TODO: add event listeners to gamePlay events
     // TODO: load saved stated from stateService
+  }
+
+  updateGameLeve() {
+    this.gameLevel.level += 1;
+    const keys = Object.keys(themes);
+    this.gameLevel.theme =
+      themes[keys[(this.gameLevel.level - 1) % keys.length]];
   }
 
   getActiveCharacter() {
@@ -88,11 +97,11 @@ export default class GameController {
       topAiMove.push(bestMove);
     }
 
-    for (let i = 0; i<aiAttack.length;i += 1){
-      topAiMove.push(aiAttack[i])
+    for (let i = 0; i < aiAttack.length; i += 1) {
+      topAiMove.push(aiAttack[i]);
     }
     const nextStep = topAiMove[Math.floor(Math.random() * topAiMove.length)];
-    [,this.activeClickPosition] = nextStep;
+    [, this.activeClickPosition] = nextStep;
     if (nextStep[4] === 'attack') {
       this.attacked(nextStep[2]);
     } else {
@@ -216,6 +225,8 @@ export default class GameController {
   }
 
   async attacked(index) {
+    const userTeamSet = this.gameState.userTeamPositionedCharacters;
+    const enemyTeamSet = this.gameState.enemyTeamPositionedCharacters;
     const attackCharacter = this.getActiveCharacter();
     const targetCharacter = this.getTargetCharacter(index);
     const attack = Math.max(
@@ -227,7 +238,31 @@ export default class GameController {
     //   this.gamePlay.showDamage(index,attack)
     // },1)
     targetCharacter.character.health -= attack;
-    await this.update();
+    this.checkDead(targetCharacter);
+    this.update();
+  }
+
+  checkDead(character) {
+    if (character.character.health <= 0) {
+      if (this.gameState.userTeamPositionedCharacters.includes(character)) {
+        const newUserTeam = new Set(
+          this.gameState.userTeamPositionedCharacters
+        ).delete(character);
+        this.gameState.userTeamPositionedCharacters = Array.from(newUserTeam);
+      } else {
+        const newEnemyTeam = new Set(
+          this.gameState.enemyTeamPositionedCharacters
+        );
+        newEnemyTeam.delete(character);
+        this.gameState.enemyTeamPositionedCharacters = Array.from(newEnemyTeam);
+      }
+
+      this.gameState.allPositionedCharacter =
+        this.gameState.userTeamPositionedCharacters.concat(
+          this.gameState.enemyTeamPositionedCharacters
+        );
+    }
+    this.createNewGame(this.gameState);
   }
 
   changeCursorType(index) {
