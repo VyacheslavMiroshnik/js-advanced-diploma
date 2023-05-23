@@ -108,7 +108,7 @@ export default class GameController {
       themes[keys[(this.gameLevel.level - 1) % keys.length]];
     for (let i = 0; i < team.characters.length; i += 1) {
       const person = team.characters[i];
-      person.leveUp(1);
+      person.leveUp();
     }
     this.userTeamPositionedCharacters = this.creatPositionedCharactersTeam(
       this.userTeam,

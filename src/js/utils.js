@@ -1,14 +1,13 @@
-import GameState from "./GameState";
-import { generateTeam } from "./generators";
+import { generateTeam } from './generators';
 import Bowman from './Characters/Bowman';
 import Daemon from './Characters/Daemon';
 import Magician from './Characters/Magician';
 import Swordsman from './Characters/Swordsman';
 import Undead from './Characters/Undead';
 import Vampire from './Characters/Vampire';
-import Team from "./Team";
-import PositionedCharacter from "./PositionedCharacter";
-
+import Team from './Team';
+import PositionedCharacter from './PositionedCharacter';
+import Character from './Character';
 
 /**
  * @todo
@@ -34,15 +33,12 @@ import PositionedCharacter from "./PositionedCharacter";
  * calcTileType(7, 7); // 'left'
  * ```
  * */
-export function createNewTeam(type){
-    
-  if (type === 'user'){
-    return generateTeam([Bowman, Magician, Swordsman], 4, 2)
+export function createNewTeam(type) {
+  if (type === 'user') {
+    return generateTeam([Bowman,Magician, Swordsman], 4, 2);
   }
-    
-  return generateTeam([Daemon, Undead, Vampire], 4, 2)
-  
 
+  return generateTeam([Daemon,Undead, Vampire], 4, 2);
 }
 
 export function createGameBoard(boardSize) {
@@ -56,11 +52,7 @@ export function createGameBoard(boardSize) {
   }
   map.set('leftBorder', leftBorder);
 
-  for (
-    let i = boardSize - 1;
-    i < boardSize ** 2;
-    i += boardSize
-  ) {
+  for (let i = boardSize - 1; i < boardSize ** 2; i += boardSize) {
     rightBorder.push(i);
   }
   map.set('rightBorder', rightBorder);
@@ -70,11 +62,7 @@ export function createGameBoard(boardSize) {
   }
   map.set('topBorder', topBorder);
 
-  for (
-    let i = boardSize ** 2 - boardSize;
-    i < boardSize ** 2;
-    i += 1
-  ) {
+  for (let i = boardSize ** 2 - boardSize; i < boardSize ** 2; i += 1) {
     bottomBorder.push(i);
   }
   map.set('bottomBorder', bottomBorder);
@@ -85,72 +73,83 @@ export function createGameBoard(boardSize) {
 export function calcTileType(index, boardSize) {
   const topLeft = index === 0 ? 'top-left' : null;
   const topRight = index === boardSize - 1 ? 'top-right' : null;
-  const bottomLeft = index === boardSize * (boardSize - 1) ? 'bottom-left' : null;
+  const bottomLeft =
+    index === boardSize * (boardSize - 1) ? 'bottom-left' : null;
   const bottomRight = index === boardSize ** 2 - 1 ? 'bottom-right' : null;
   const left = index > 0 && !(index % boardSize) ? 'left' : null;
-  const right = index > boardSize && !((index + 1) % boardSize) ? 'right' : null;
+  const right =
+    index > boardSize && !((index + 1) % boardSize) ? 'right' : null;
   const top = index > 0 && index < boardSize - 1 ? 'top' : null;
-  const bottom = index > boardSize * (boardSize - 1) && index < boardSize ** 2 - 1
-    ? 'bottom'
-    : null;
+  const bottom =
+    index > boardSize * (boardSize - 1) && index < boardSize ** 2 - 1
+      ? 'bottom'
+      : null;
 
   return (
-    topLeft
-    || topRight
-    || bottomLeft
-    || bottomRight
-    || left
-    || bottom
-    || top
-    || right
-    || 'center'
+    topLeft ||
+    topRight ||
+    bottomLeft ||
+    bottomRight ||
+    left ||
+    bottom ||
+    top ||
+    right ||
+    'center'
   );
 }
 
-export function calculateMoveCharacter(team,allTeam,gameBoard,boardSize) {
-  const {character,position} = team;
+export function calculateMoveCharacter(team, allTeam, gameBoard, boardSize) {
+  const { character, position } = team;
   const { type } = character;
-  const friendlyPosition = allTeam.map(el => el.position);
-  const moved = GameState.moved(type);
+  const friendlyPosition = allTeam.map((el) => el.position);
+  const moved = Character.moved(type);
   const leftBorderPosition = gameBoard.get('leftBorder');
   const rightBorderPosition = gameBoard.get('rightBorder');
   const movedSet = new Set();
 
-  for (let i  = 1; i <= moved; i+=1 ){
-    if(rightBorderPosition.includes(position - i) || position - i < 0){
+  for (let i = 1; i <= moved; i += 1) {
+    if (rightBorderPosition.includes(position - i) || position - i < 0) {
       break;
     }
-    movedSet.add(position - ((i)*boardSize)  )
-    movedSet.add(position + ((i)*boardSize)  )
-    movedSet.add(position - i + ((i)*boardSize) )
-    movedSet.add(position - i - ((i)*boardSize) )
-    movedSet.add(position - i )
+    movedSet.add(position - i * boardSize);
+    movedSet.add(position + i * boardSize);
+    movedSet.add(position - i + i * boardSize);
+    movedSet.add(position - i - i * boardSize);
+    movedSet.add(position - i);
   }
-  
-  for (let i  = 1; i <= moved; i+=1 ){
-    if(leftBorderPosition.includes(position + i) || (position + i)>= boardSize ** 2){
+
+  for (let i = 1; i <= moved; i += 1) {
+    if (
+      leftBorderPosition.includes(position + i) ||
+      position + i >= boardSize ** 2
+    ) {
       break;
     }
-    movedSet.add(position - ((i)*boardSize)  )
-    movedSet.add(position + ((i)*boardSize)  )
-    movedSet.add(position + i + ((i)*boardSize) )
-    movedSet.add(position + i - ((i)*boardSize) )
-    movedSet.add(position + i )
+    movedSet.add(position - i * boardSize);
+    movedSet.add(position + i * boardSize);
+    movedSet.add(position + i + i * boardSize);
+    movedSet.add(position + i - i * boardSize);
+    movedSet.add(position + i);
   }
-  for (let i = 0; i< friendlyPosition.length; i += 1 ){
-    movedSet.delete(friendlyPosition[i])
+  for (let i = 0; i < friendlyPosition.length; i += 1) {
+    movedSet.delete(friendlyPosition[i]);
   }
 
   return Array.from(movedSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
-export function  calculateAttackCharacter(attackCharacter,team,gameBoard,boardSize) {
-  const {character,position} = attackCharacter;
+export function calculateAttackCharacter(
+  attackCharacter,
+  team,
+  gameBoard,
+  boardSize
+) {
+  const { character, position } = attackCharacter;
   const { type } = character;
-  const friendlyPosition = team.map(el => el.position) 
-  const attack = GameState.attack(type);
+  const friendlyPosition = team.map((el) => el.position);
+  const attack = Character.attack(type);
   const leftBorderPosition = gameBoard.get('leftBorder');
   const rightBorderPosition = gameBoard.get('rightBorder');
-  const rowCharacterPosition = Math.floor((position ) / boardSize);
+  const rowCharacterPosition = Math.floor(position / boardSize);
   const startRow =
     rowCharacterPosition >= attack ? rowCharacterPosition - attack : 0;
   const stopRow =
@@ -171,81 +170,95 @@ export function  calculateAttackCharacter(attackCharacter,team,gameBoard,boardSi
       attackSet.add(leftBorderPosition[i] + x);
     }
   }
-  for (let i = 0; i< friendlyPosition.length; i += 1 ){
-    attackSet.delete(friendlyPosition[i])
+  for (let i = 0; i < friendlyPosition.length; i += 1) {
+    attackSet.delete(friendlyPosition[i]);
   }
   return Array.from(attackSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
-export  function  rankedMove(aiTeam,targetCharacter,afterAttack) {
-  const {character} = targetCharacter;
-  const rank = ((GameState.moved(character.type) + character.health) / (100 * GameState.attack(character.type))) + (1/character.attack)*afterAttack;
-  return rank
+export function rankedMove(aiTeam, targetCharacter, afterAttack) {
+  const { character } = targetCharacter;
+  const rank =
+    (Character.moved(character.type) + character.health) /
+      (100 * Character.attack(character.type)) +
+    (1 / character.attack) * afterAttack;
+  return rank;
 }
-export function rankedAttack(aiTeam,targetTeam,afterAttack){
-const rank = (aiTeam.character.attack - targetTeam.character.defence) - (afterAttack* (targetTeam.character.attack - aiTeam.character.defence))
-return rank/10
-
+export function rankedAttack(aiTeam, targetTeam, afterAttack) {
+  const rank =
+    aiTeam.character.attack -
+    targetTeam.character.defence -
+    afterAttack * (targetTeam.character.attack - aiTeam.character.defence);
+  return rank / 10;
 }
 
-export function createCharacter(char){
+export function createCharacter(char) {
   let character;
   switch (char.type) {
     case 'bowman':
-      character = new Bowman(char.level)
+      character = new Bowman(char.level);
       break;
     case 'daemon':
-      character = new Daemon(char.level)
+      character = new Daemon(char.level);
       break;
-    case 'magician' : 
-      character = new Magician(char.level)
+    case 'magician':
+      character = new Magician(char.level);
       break;
     case 'swordsman':
-      character = new Swordsman(char.level)
+      character = new Swordsman(char.level);
       break;
     case 'undead':
-      character = new Undead(char.level)
+      character = new Undead(char.level);
       break;
     case 'vampire':
-      character = new Vampire(char.level)
+      character = new Vampire(char.level);
       break;
-  
+
     default:
       break;
   }
   character.health = char.health;
   character.attack = char.attack;
   character.defence = char.defence;
-  return character
+  return character;
 }
 
-export function jsonParseGameState(object){
-  const {activeTeam,targetTeam,boardSize,gameLevel} = object;
+export function jsonParseGameState(object) {
+  const { activeTeam, targetTeam, boardSize, gameLevel } = object;
   let userTeam = [];
   let enemyTeam = [];
   const userTeamPositionedCharacters = [];
   const enemyTeamPositionedCharacters = [];
-  for (let i = 0; i<object.userTeamPositionedCharacters.length; i+=1){
-    const char = createCharacter(object.userTeamPositionedCharacters[i].character);
-    const {position} = object.userTeamPositionedCharacters[i]
-    userTeam.push(char)
-    userTeamPositionedCharacters.push(new PositionedCharacter(char,position))
+  for (let i = 0; i < object.userTeamPositionedCharacters.length; i += 1) {
+    const char = createCharacter(
+      object.userTeamPositionedCharacters[i].character
+    );
+    const { position } = object.userTeamPositionedCharacters[i];
+    userTeam.push(char);
+    userTeamPositionedCharacters.push(new PositionedCharacter(char, position));
   }
-  for (let i = 0; i<object.enemyTeamPositionedCharacters.length; i+=1){
-    const char = createCharacter(object.enemyTeamPositionedCharacters[i].character);
-    const {position} = object.enemyTeamPositionedCharacters[i]
-    enemyTeam.push(char)
-    enemyTeamPositionedCharacters.push(new PositionedCharacter(char,position))
+  for (let i = 0; i < object.enemyTeamPositionedCharacters.length; i += 1) {
+    const char = createCharacter(
+      object.enemyTeamPositionedCharacters[i].character
+    );
+    const { position } = object.enemyTeamPositionedCharacters[i];
+    enemyTeam.push(char);
+    enemyTeamPositionedCharacters.push(new PositionedCharacter(char, position));
   }
   userTeam = new Team(userTeam);
   enemyTeam = new Team(enemyTeam);
-  return {boardSize,activeTeam,targetTeam,userTeam,enemyTeam,userTeamPositionedCharacters,enemyTeamPositionedCharacters,gameLevel}
-
-
+  return {
+    boardSize,
+    activeTeam,
+    targetTeam,
+    userTeam,
+    enemyTeam,
+    userTeamPositionedCharacters,
+    enemyTeamPositionedCharacters,
+    gameLevel,
+  };
 }
 
-
-
-export function setDefaultPosition(startposition,boardSize) {
+export function setDefaultPosition(startposition, boardSize) {
   const set = new Set();
   for (let i = startposition; i < boardSize ** 2; i += boardSize) {
     set.add(i);
