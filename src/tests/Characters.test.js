@@ -4,13 +4,13 @@ import Bowman from '../js/Characters/Bowman';
 const listHeroes = [
   [
     'Bowman',
-    new Bowman(3),
+    new Bowman(1),
     {
       type: 'bowman',
       health: 50,
       attack: 25,
       defence: 25,
-      level: 3,
+      level: 1,
     },
   ],
   [

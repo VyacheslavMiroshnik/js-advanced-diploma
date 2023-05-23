@@ -107,14 +107,13 @@ export function calcTileType(index, boardSize) {
   );
 }
 
-export function calculateMoveCharacter(team) {
+export function calculateMoveCharacter(team,allTeam,gameBoard,boardSize) {
   const {character,position} = team;
   const { type } = character;
-  const { boardSize} = this.gameState;
-  const friendlyPosition = this.allPositionedCharacter.map(el => el.position);
+  const friendlyPosition = allTeam.map(el => el.position);
   const moved = GameState.moved(type);
-  const leftBorderPosition = this.gameBoard.get('leftBorder');
-  const rightBorderPosition = this.gameBoard.get('rightBorder');
+  const leftBorderPosition = gameBoard.get('leftBorder');
+  const rightBorderPosition = gameBoard.get('rightBorder');
   const movedSet = new Set();
 
   for (let i  = 1; i <= moved; i+=1 ){
@@ -144,14 +143,13 @@ export function calculateMoveCharacter(team) {
 
   return Array.from(movedSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
-export function  calculateAttackCharacter(team) {
-  const {character,position} = team;
+export function  calculateAttackCharacter(attackCharacter,team,gameBoard,boardSize) {
+  const {character,position} = attackCharacter;
   const { type } = character;
-  const { boardSize } = this.gameState;
-  const friendlyPosition = this.gameState.activeTeam === 'user'? this.userTeamPositionedCharacters.map(el => el.position) : this.enemyTeamPositionedCharacters.map(el => el.position);
+  const friendlyPosition = team.map(el => el.position) 
   const attack = GameState.attack(type);
-  const leftBorderPosition = this.gameBoard.get('leftBorder');
-  const rightBorderPosition = this.gameBoard.get('rightBorder');
+  const leftBorderPosition = gameBoard.get('leftBorder');
+  const rightBorderPosition = gameBoard.get('rightBorder');
   const rowCharacterPosition = Math.floor((position ) / boardSize);
   const startRow =
     rowCharacterPosition >= attack ? rowCharacterPosition - attack : 0;
