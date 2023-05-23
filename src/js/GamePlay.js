@@ -198,7 +198,6 @@ export default class GamePlay {
   }
 
   selectCell(index, color = 'yellow') {
-    //this.deselectCell(index);
     this.cells[index].classList.add('selected', `selected-${color}`);
   }
 

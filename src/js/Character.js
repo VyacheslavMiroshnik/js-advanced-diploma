@@ -30,6 +30,7 @@ export default class Character {
   }
 
   leveUp(level) {
+    this.level +=1
     for (let i = 0; i < level; i += 1) {
       this.attack = Math.max(
         this.attack,

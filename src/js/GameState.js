@@ -1,27 +1,21 @@
 
-import PositionedCharacter from './PositionedCharacter';
-
 export default class GameState {
-  constructor({ boardSize },userTeam, enemyTeam) {
-    this.boardSize = boardSize;
-    this.userTeam = userTeam;
-    this.enemyTeam = enemyTeam;
-    this.userTeamPositionedCharacters = this.creatPositionedCharactersTeam(
-      this.userTeam,
-      'user'
-    );
-    this.enemyTeamPositionedCharacters = this.creatPositionedCharactersTeam(
-      this.enemyTeam,
-      'enemy'
-    );
-    this.allPositionedCharacter = this.userTeamPositionedCharacters.concat(
-      this.enemyTeamPositionedCharacters
-    );
-    this.activeTeam = this.userTeamPositionedCharacters;
-    this.targetTeam = this.enemyTeamPositionedCharacters;
-    this.gameLevel = { level: 1, theme: 'prairie' };
-    this.border = this.createGameField();
+  constructor(object) {
+    this.boardSize = object.boardSize
+    this.activeTeam = 'user'
+    this.targetTeam = 'enemy'
+    this.userTeam = object.userTeam;
+    this.enemyTeam = object.enemyTeam;    
+    this.userTeamPositionedCharacters = object.userTeamPositionedCharacters;
+    this.enemyTeamPositionedCharacters = object.enemyTeamPositionedCharacters;
+    this.gameLevel = object.gameLevel;
   }
+
+update(object){ 
+this.userPositionedCharacters = object.userTeamPositionedCharacters;
+this.enemyTeamPositionedCharacters = object.enemyTeamPositionedCharacters;
+this.gameLevel = object.gameLevel;
+}
 
   static moved(type) {
     return new Map([
@@ -48,81 +42,17 @@ export default class GameState {
   changeTeam() {
     this.targetTeam = this.activeTeam;
     this.activeTeam =
-      this.activeTeam === this.userTeamPositionedCharacters
-        ? this.enemyTeamPositionedCharacters
-        : this.userTeamPositionedCharacters;
+      this.activeTeam === 'user'
+        ? 'enemy'
+        : 'user';
   }
 
-  creatPositionedCharactersTeam(team, typeTeam) {
-    const { characters } = team;
-    const teamAllStartPosition =
-      typeTeam === 'user'
-        ? this.setDefaultPosition(1)
-        : this.setDefaultPosition(this.boardSize - 1);
-    const positionedTeam = [];
+  
 
-    for (let i = 0; i < characters.length; i += 1) {
-      const arrayPositions = Array.from(teamAllStartPosition);
-      const randomIndex = Math.floor(Math.random() * arrayPositions.length);
-      const position = arrayPositions[randomIndex];
-      teamAllStartPosition.delete(position);
-      const characterPositioned = new PositionedCharacter(
-        characters[i],
-        position
-      );
-      positionedTeam.push(characterPositioned);
-    }
-    return positionedTeam;
-  }
-
-  setDefaultPosition(startposition) {
-    const set = new Set();
-    for (let i = startposition; i < this.boardSize ** 2; i += this.boardSize) {
-      set.add(i);
-      set.add(i - 1);
-    }
-    return set;
-  }
-
-  createGameField() {
-    const map = new Map();
-    const leftBorder = [];
-    const rightBorder = [];
-    const topBorder = [];
-    const bottomBorder = [];
-    for (let i = 0; i < this.boardSize ** 2; i += this.boardSize) {
-      leftBorder.push(i);
-    }
-    map.set('leftBorder', leftBorder);
-
-    for (
-      let i = this.boardSize - 1;
-      i < this.boardSize ** 2;
-      i += this.boardSize
-    ) {
-      rightBorder.push(i);
-    }
-    map.set('rightBorder', rightBorder);
-
-    for (let i = 0; i < this.boardSize; i += 1) {
-      topBorder.push(i);
-    }
-    map.set('topBorder', topBorder);
-
-    for (
-      let i = this.boardSize ** 2 - this.boardSize;
-      i < this.boardSize ** 2;
-      i += 1
-    ) {
-      bottomBorder.push(i);
-    }
-    map.set('bottomBorder', bottomBorder);
-
-    return map;
-  }
+ 
 
   static from(object) {
-    // TODO: create objecthjhj
-    return null;
+  
+    return new this(object);
   }
 }
