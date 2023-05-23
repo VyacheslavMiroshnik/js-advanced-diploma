@@ -23,17 +23,15 @@ export function* characterGenerator(allowedTypes) {
  * @returns экземпляр Team, хранящий экземпляры персонажей. Количество персонажей в команде - chara
  * */
 export function generateTeam(allowedTypes, maxLevel, characterCount) {
-  const team = [];
+  const team = new Team;
   const generator = characterGenerator(allowedTypes);
   for (let i = 0; i < characterCount; i += 1) {
-
     const level = Math.floor(Math.random() * maxLevel + 1);
-    const pers = generator.next().value
+    const character = generator.next().value
     for (let x = 1; x < level; x += 1) {
-      pers.levelUp();
-
+      // character.levelUp();
     }
-    team.push(pers);
+    team.add(character);
   }
-  return new Team(team);
+  return team;
 }

@@ -12,7 +12,29 @@
  * ```
  * */
 export default class Team {
-  constructor(characters) {
+  constructor(characters = []) {
     this.characters = characters;
   }
+
+  has(character){
+    return this.characters.includes(character)
+  }
+
+  add(character){
+    this.characters.push(character)
+  }
+
+  addAll(characters){
+    characters.forEach(element => {
+      this.add(element)  
+    });
+  }
+
+  remove(character){
+    const set = new Set(this.characters);
+    set.delete(character);
+    this.characters = Array.from(set)
+  }
 }
+
+

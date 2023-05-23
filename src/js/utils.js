@@ -33,6 +33,8 @@ import Character from './Character';
  * calcTileType(7, 7); // 'left'
  * ```
  * */
+
+// генерирует новую команду
 export function createNewTeam(type) {
   if (type === 'user') {
     return generateTeam([Bowman,Magician, Swordsman], 4, 2);
@@ -41,6 +43,7 @@ export function createNewTeam(type) {
   return generateTeam([Daemon,Undead, Vampire], 4, 2);
 }
 
+// создает границы игрового поля
 export function createGameBoard(boardSize) {
   const map = new Map();
   const leftBorder = [];
@@ -70,6 +73,8 @@ export function createGameBoard(boardSize) {
   return map;
 }
 
+// для отрисовки игрового поля и задание правильного стиля ячеек
+
 export function calcTileType(index, boardSize) {
   const topLeft = index === 0 ? 'top-left' : null;
   const topRight = index === boardSize - 1 ? 'top-right' : null;
@@ -98,6 +103,7 @@ export function calcTileType(index, boardSize) {
   );
 }
 
+// расчитывает все возможные ячеейки для передвижение персонажа
 export function calculateMoveCharacter(team, allTeam, gameBoard, boardSize) {
   const { character, position } = team;
   const { type } = character;
@@ -137,6 +143,9 @@ export function calculateMoveCharacter(team, allTeam, gameBoard, boardSize) {
 
   return Array.from(movedSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
+
+// расчитывает все возможные ячееки для атаки 
+
 export function calculateAttackCharacter(
   attackCharacter,
   team,
@@ -175,6 +184,9 @@ export function calculateAttackCharacter(
   }
   return Array.from(attackSet).filter((el) => el >= 0 && el < boardSize ** 2);
 }
+
+// Что то вроде оценивания ячейки для движения
+
 export function rankedMove(aiTeam, targetCharacter, afterAttack) {
   const { character } = targetCharacter;
   const rank =
@@ -183,6 +195,9 @@ export function rankedMove(aiTeam, targetCharacter, afterAttack) {
     (1 / character.attack) * afterAttack;
   return rank;
 }
+
+// Что то вроде оценивания ячейки для атаки
+
 export function rankedAttack(aiTeam, targetTeam, afterAttack) {
   const rank =
     aiTeam.character.attack -
@@ -191,26 +206,27 @@ export function rankedAttack(aiTeam, targetTeam, afterAttack) {
   return rank / 10;
 }
 
+// Создает определеного перcонажа после загрузки сохранения
 export function createCharacter(char) {
   let character;
   switch (char.type) {
     case 'bowman':
-      character = new Bowman(char.level);
+      character = new Bowman();
       break;
     case 'daemon':
-      character = new Daemon(char.level);
+      character = new Daemon();
       break;
     case 'magician':
-      character = new Magician(char.level);
+      character = new Magician();
       break;
     case 'swordsman':
-      character = new Swordsman(char.level);
+      character = new Swordsman();
       break;
     case 'undead':
-      character = new Undead(char.level);
+      character = new Undead();
       break;
     case 'vampire':
-      character = new Vampire(char.level);
+      character = new Vampire();
       break;
 
     default:
@@ -219,13 +235,16 @@ export function createCharacter(char) {
   character.health = char.health;
   character.attack = char.attack;
   character.defence = char.defence;
+  character.level = char.level
   return character;
 }
 
+// обьект после сохранения приводит  к рабочему состоянию
+
 export function jsonParseGameState(object) {
   const { activeTeam, targetTeam, boardSize, gameLevel } = object;
-  let userTeam = [];
-  let enemyTeam = [];
+  const userTeam = new Team();
+  const enemyTeam = new Team();
   const userTeamPositionedCharacters = [];
   const enemyTeamPositionedCharacters = [];
   for (let i = 0; i < object.userTeamPositionedCharacters.length; i += 1) {
@@ -233,7 +252,7 @@ export function jsonParseGameState(object) {
       object.userTeamPositionedCharacters[i].character
     );
     const { position } = object.userTeamPositionedCharacters[i];
-    userTeam.push(char);
+    userTeam.add(char);
     userTeamPositionedCharacters.push(new PositionedCharacter(char, position));
   }
   for (let i = 0; i < object.enemyTeamPositionedCharacters.length; i += 1) {
@@ -241,11 +260,9 @@ export function jsonParseGameState(object) {
       object.enemyTeamPositionedCharacters[i].character
     );
     const { position } = object.enemyTeamPositionedCharacters[i];
-    enemyTeam.push(char);
+    enemyTeam.add(char);
     enemyTeamPositionedCharacters.push(new PositionedCharacter(char, position));
   }
-  userTeam = new Team(userTeam);
-  enemyTeam = new Team(enemyTeam);
   return {
     boardSize,
     activeTeam,
@@ -257,7 +274,7 @@ export function jsonParseGameState(object) {
     gameLevel,
   };
 }
-
+// создает список всех стартовых  startPosition указывает на тип команды и где она будет распологаться 
 export function setDefaultPosition(startposition, boardSize) {
   const set = new Set();
   for (let i = startposition; i < boardSize ** 2; i += boardSize) {
@@ -266,6 +283,7 @@ export function setDefaultPosition(startposition, boardSize) {
   }
   return set;
 }
+
 export function calcHealthLevel(health) {
   if (health < 15) {
     return 'critical';

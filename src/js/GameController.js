@@ -33,10 +33,8 @@ export default class GameController {
     this.enemyTeam = createNewTeam('enemy');
     this.gameLevel = { level: 1, theme: 'prairie' };
     this.gameBoard = createGameBoard(this.gamePlay.boardSize);
-
     this.activeClickPosition = null;
     this.activeEnterPosition = null;
-
     this.userTeamPositionedCharacters = this.creatPositionedCharactersTeam(
       this.userTeam,
       'user'
@@ -213,16 +211,18 @@ export default class GameController {
   }
   // Проверка живой ли персонаж
 
-  checkDead(character) {
-    if (character.character.health <= 0) {
-      if (this.userTeamPositionedCharacters.includes(character)) {
+  checkDead(positionedCharacter) {
+    if (positionedCharacter.character.health <= 0) {
+      if (this.userTeamPositionedCharacters.includes(positionedCharacter)) {
         const newUserTeam = new Set(this.userTeamPositionedCharacters);
-        newUserTeam.delete(character);
+        newUserTeam.delete(positionedCharacter);
         this.userTeamPositionedCharacters = Array.from(newUserTeam);
+        this.userTeam.remove(positionedCharacter.character)
       } else {
         const newEnemyTeam = new Set(this.enemyTeamPositionedCharacters);
-        newEnemyTeam.delete(character);
+        newEnemyTeam.delete(positionedCharacter);
         this.enemyTeamPositionedCharacters = Array.from(newEnemyTeam);
+        this.enemyTeam.remove(positionedCharacter.character)
       }
 
       this.allPositionedCharacter = this.userTeamPositionedCharacters.concat(
