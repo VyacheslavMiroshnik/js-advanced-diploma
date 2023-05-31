@@ -11,6 +11,8 @@ const listHeroes = [
       attack: 25,
       defence: 25,
       level: 1,
+      stepAttack:2,
+      stepMove:2
     },
   ],
   [
@@ -21,6 +23,8 @@ const listHeroes = [
       health: 50,
       attack: 25,
       defence: 25,
+      stepAttack: 2,
+      stepMove: 2,
       level: 1,
     },
   ],

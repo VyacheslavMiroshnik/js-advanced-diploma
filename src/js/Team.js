@@ -31,9 +31,7 @@ export default class Team {
   }
 
   remove(character){
-    const set = new Set(this.characters);
-    set.delete(character);
-    this.characters = Array.from(set)
+    this.characters = this.characters.filter(char => char !== character)
   }
 }
 

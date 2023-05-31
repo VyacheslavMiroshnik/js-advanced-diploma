@@ -13,7 +13,7 @@ export default class GameState {
   update(object) {
     this.userTeam = object.userTeam
     this.enemyTeam = object.enemyTeam
-    this.userPositionedCharacters = object.userTeamPositionedCharacters;
+    this.userTeamPositionedCharacters = object.userTeamPositionedCharacters;
     this.enemyTeamPositionedCharacters = object.enemyTeamPositionedCharacters;
     this.gameLevel = object.gameLevel;
   }

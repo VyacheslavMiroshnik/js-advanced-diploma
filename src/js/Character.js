@@ -14,7 +14,7 @@ export default class Character {
     // TODO: выбросите исключение, если кто-то использует 'new Character()'
   }
 
-  leveUp() {
+  levelUp() {
     this.level += 1
       this.attack = Math.max(
         this.attack,
@@ -27,26 +27,5 @@ export default class Character {
     this.health = this.health + 80 > 100 ? 100 : this.health + 80;
   }
   
-  static moved(type) {
-    return new Map([
-      ['bowman', 2],
-      ['vampire', 2],
-      ['swordsman', 4],
-      ['undead', 4],
-      ['magician', 1],
-      ['daemon', 1],
-    ]).get(type);
-  }
-
-  static attack(type) {
-    return new Map([
-      ['bowman', 2],
-      ['vampire', 2],
-      ['swordsman', 1],
-      ['undead', 1],
-      ['magician', 4],
-      ['daemon', 4],
-    ]).get(type);
-  }
 
 }

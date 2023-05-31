@@ -7,7 +7,6 @@ import Undead from './Characters/Undead';
 import Vampire from './Characters/Vampire';
 import Team from './Team';
 import PositionedCharacter from './PositionedCharacter';
-import Character from './Character';
 
 /**
  * @todo
@@ -106,9 +105,8 @@ export function calcTileType(index, boardSize) {
 // расчитывает все возможные ячеейки для передвижение персонажа
 export function calculateMoveCharacter(team, allTeam, gameBoard, boardSize) {
   const { character, position } = team;
-  const { type } = character;
   const friendlyPosition = allTeam.map((el) => el.position);
-  const moved = Character.moved(type);
+  const moved = character.stepMove;
   const leftBorderPosition = gameBoard.get('leftBorder');
   const rightBorderPosition = gameBoard.get('rightBorder');
   const movedSet = new Set();
@@ -153,9 +151,8 @@ export function calculateAttackCharacter(
   boardSize
 ) {
   const { character, position } = attackCharacter;
-  const { type } = character;
   const friendlyPosition = team.map((el) => el.position);
-  const attack = Character.attack(type);
+  const attack = character.stepAttack;
   const leftBorderPosition = gameBoard.get('leftBorder');
   const rightBorderPosition = gameBoard.get('rightBorder');
   const rowCharacterPosition = Math.floor(position / boardSize);
@@ -190,8 +187,8 @@ export function calculateAttackCharacter(
 export function rankedMove(aiTeam, targetCharacter, afterAttack) {
   const { character } = targetCharacter;
   const rank =
-    (Character.moved(character.type) + character.health) /
-      (100 * Character.attack(character.type)) +
+    (character.stepMove + character.health) /
+      (100 * character.stepAttack) +
     (1 / character.attack) * afterAttack;
   return rank;
 }

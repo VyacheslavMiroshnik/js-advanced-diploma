@@ -29,7 +29,7 @@ export function generateTeam(allowedTypes, maxLevel, characterCount) {
     const level = Math.floor(Math.random() * maxLevel + 1);
     const character = generator.next().value
     for (let x = 1; x < level; x += 1) {
-      // character.levelUp();
+      character.levelUp();
     }
     team.add(character);
   }
